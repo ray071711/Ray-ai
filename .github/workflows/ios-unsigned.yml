@@ -1,0 +1,37 @@
+name: Build Ray AI iOS IPA (unsigned)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run build
+      - run: npx cap add ios --packagemanager SPM
+      - run: npx cap sync ios
+      - name: Allow connecting to Ray AI on the local Wi-Fi
+        run: |
+          /usr/libexec/PlistBuddy -c 'Add :NSLocalNetworkUsageDescription string "Ray AI connects to your own computer on the same Wi-Fi to use its local AI and image generator."' ios/App/App/Info.plist || /usr/libexec/PlistBuddy -c 'Set :NSLocalNetworkUsageDescription "Ray AI connects to your own computer on the same Wi-Fi to use its local AI and image generator."' ios/App/App/Info.plist
+          /usr/libexec/PlistBuddy -c 'Add :NSAppTransportSecurity dict' ios/App/App/Info.plist || true
+          /usr/libexec/PlistBuddy -c 'Add :NSAppTransportSecurity:NSAllowsLocalNetworking bool true' ios/App/App/Info.plist || /usr/libexec/PlistBuddy -c 'Set :NSAppTransportSecurity:NSAllowsLocalNetworking true' ios/App/App/Info.plist
+      - name: Build unsigned app for iPhone
+        run: |
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
+      - name: Package unsigned IPA
+        run: |
+          mkdir -p build/Payload
+          cp -R build/ios/Build/Products/Release-iphoneos/App.app build/Payload/App.app
+          cd build && /usr/bin/zip -qry RayAI-unsigned.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RayAI-unsigned-IPA
+          path: build/RayAI-unsigned.ipa
+          if-no-files-found: error
