@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f7fb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Ray AI">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/icon.svg">
+  <title>Ray AI</title>
+  <style>
+    :root { color-scheme: light; --ink:#25272b; --muted:#777d86; --line:#e7e8eb; --soft:#f7f7f8; --accent:#6658d3; --accent-hover:#5546c4; --sidebar:#f8f8f9; }
+    * { box-sizing:border-box; }
+    html, body { margin:0; height:100%; }
+    body { color:var(--ink); background:#fff; font-family:Inter,"Segoe UI","Malgun Gothic",sans-serif; font-size:14px; }
+    button, textarea, input { font:inherit; }
+    button { color:inherit; }
+    .app { height:100vh; display:flex; overflow:hidden; }
+    .sidebar { width:258px; flex:0 0 258px; background:var(--sidebar); border-right:1px solid #efeff0; display:flex; flex-direction:column; padding:18px 13px 14px; }
+    .brand { display:flex; align-items:center; gap:10px; padding:5px 9px 20px; }
+    .logo { width:30px; height:30px; display:grid; place-items:center; color:white; border-radius:10px; background:linear-gradient(145deg,#8778ec,#5f55c5); font-size:17px; box-shadow:0 3px 9px #6558d333; }
+    .brand-name { font-size:16px; font-weight:700; letter-spacing:-.4px; }
+    .new-chat { border:1px solid #e7e7e9; border-radius:11px; background:#fff; text-align:left; padding:11px 12px; cursor:pointer; transition:.15s; box-shadow:0 1px 2px #00000008; }
+    .new-chat:hover, .side-action:hover { background:#f0effa; border-color:#dedaf8; }
+    .plus { display:inline-grid; width:22px; height:22px; place-items:center; margin-right:9px; border-radius:7px; color:var(--accent); background:#efedff; font-size:17px; vertical-align:middle; }
+    .side-label { color:#9297a0; font-size:11px; font-weight:650; letter-spacing:.08em; padding:23px 10px 8px; }
+    .side-action { border:1px solid transparent; border-radius:9px; background:transparent; text-align:left; padding:10px; cursor:pointer; color:#45484e; }
+    .side-action .ico { display:inline-block; width:24px; color:#777d88; }
+    .side-spacer { flex:1; }
+    .local-card { border:1px solid #e7e8eb; border-radius:12px; background:#fff; padding:12px; margin:10px 2px; }
+    .local-title { font-weight:650; font-size:12px; margin-bottom:6px; }
+    .local-copy { font-size:11px; color:var(--muted); line-height:1.6; }
+    .connection { display:flex; align-items:center; gap:8px; padding:12px 9px 3px; color:var(--muted); font-size:12px; }
+    .dot { width:8px; height:8px; border-radius:50%; background:#a6abb4; }
+    .dot.ok { background:#2eaa70; box-shadow:0 0 0 3px #2eaa7017; }
+    .dot.warn { background:#dc9b26; }
+    .main { flex:1; min-width:0; display:flex; flex-direction:column; position:relative; }
+    .topbar { height:58px; flex:0 0 58px; display:flex; align-items:center; justify-content:space-between; padding:0 25px; border-bottom:1px solid #f0f0f1; }
+    .model-label { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:620; }
+    .model-label span { color:var(--muted); font-weight:400; }
+    .top-actions { display:flex; align-items:center; gap:7px; }
+    .icon-button { display:flex; align-items:center; gap:7px; border:0; border-radius:8px; padding:8px 10px; background:transparent; color:#666b74; cursor:pointer; font-size:12px; }
+    .icon-button:hover { background:var(--soft); color:var(--ink); }
+    .scroll-area { flex:1; min-height:0; overflow-y:auto; scroll-behavior:smooth; }
+    .content { width:min(100%, 820px); margin:0 auto; padding:28px 30px 190px; }
+    .welcome { min-height:calc(100vh - 315px); display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:30px 0 70px; }
+    .welcome-mark { width:52px; height:52px; border-radius:17px; display:grid; place-items:center; color:white; background:linear-gradient(145deg,#8778ec,#5f55c5); box-shadow:0 8px 24px #6658d326; font-size:27px; margin-bottom:21px; }
+    h1 { margin:0; font-size:27px; letter-spacing:-1.1px; font-weight:680; }
+    .welcome p { margin:10px 0 28px; color:var(--muted); font-size:14px; }
+    .suggestions { display:grid; grid-template-columns:1fr 1fr; gap:10px; width:min(100%, 560px); text-align:left; }
+    .suggestion { border:1px solid var(--line); background:#fff; border-radius:12px; padding:13px 15px; cursor:pointer; transition:.15s; }
+    .suggestion:hover { background:#faf9ff; border-color:#d9d4f7; transform:translateY(-1px); }
+    .suggestion strong { display:block; font-size:12px; font-weight:650; margin-bottom:5px; }
+    .suggestion span { display:block; color:var(--muted); font-size:11px; line-height:1.45; }
+    .messages { display:flex; flex-direction:column; gap:27px; padding-top:18px; }
+    .message { display:flex; gap:13px; align-items:flex-start; animation:rise .2s ease-out; }
+    @keyframes rise { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+    .avatar { width:29px; height:29px; flex:0 0 29px; display:grid; place-items:center; border-radius:10px; background:#eeeaff; color:var(--accent); font-size:14px; font-weight:700; }
+    .message.user { justify-content:flex-end; }
+    .message.user .avatar { order:2; background:#e9ebef; color:#515660; }
+    .message-body { max-width:min(690px, calc(100% - 42px)); min-width:0; }
+    .message-name { font-size:12px; font-weight:650; margin:3px 0 7px; color:#50545c; }
+    .message-text { color:#282a2e; line-height:1.75; white-space:pre-wrap; overflow-wrap:anywhere; font-size:14px; }
+    .message.user .message-body { background:#f2f2f3; border-radius:17px 5px 17px 17px; padding:11px 15px; }
+    .message.user .message-name { display:none; }
+    .message.assistant .message-text { padding-right:12px; }
+    .message.error .message-text { color:#a94646; }
+    .typing { display:flex; gap:4px; padding:7px 0; }
+    .typing i { width:6px; height:6px; border-radius:50%; background:#9992ce; animation:bounce .8s infinite alternate; }
+    .typing i:nth-child(2) { animation-delay:.2s; } .typing i:nth-child(3) { animation-delay:.4s; }
+    @keyframes bounce { to { opacity:.35; transform:translateY(-4px); } }
+    .composer-wrap { position:absolute; bottom:0; left:0; right:0; padding:25px 24px 15px; background:linear-gradient(0deg,#fff 75%,#ffffffed 90%,#ffffff00); }
+    .composer { width:min(100%, 790px); margin:0 auto; border:1px solid #dedfe3; border-radius:19px; background:#fff; box-shadow:0 5px 22px #20242b0d; padding:12px 12px 9px 17px; transition:border-color .15s, box-shadow .15s; }
+    .composer:focus-within { border-color:#b9b3e6; box-shadow:0 5px 25px #6658d312; }
+    textarea { display:block; width:100%; min-height:30px; max-height:180px; resize:none; border:0; outline:0; color:var(--ink); background:transparent; line-height:1.55; padding:3px 2px; font-size:14px; }
+    textarea::placeholder { color:#9a9da4; }
+    .composer-bottom { display:flex; justify-content:space-between; align-items:center; margin-top:5px; }
+    .hint { color:#9297a0; font-size:10px; padding-left:2px; }
+    .tool-row { display:flex; gap:6px; padding:0 0 8px 1px; }
+    .tool-chip { border:1px solid #e4e5e9; border-radius:9px; padding:6px 9px; background:#fff; color:#626772; cursor:pointer; font-size:11px; transition:.15s; }
+    .tool-chip:hover { background:#f7f6ff; border-color:#d9d5f5; }
+    .tool-chip.active { color:#5649bd; border-color:#cfc9f3; background:#f1efff; }
+    .source-list { display:flex; flex-direction:column; gap:7px; margin-top:13px; }
+    .source-card { display:block; border:1px solid #e8e8eb; border-radius:10px; padding:10px 12px; color:inherit; text-decoration:none; background:#fff; }
+    .source-card:hover { border-color:#cfc9f3; background:#fbfaff; }
+    .source-card strong { display:block; color:#4f48a7; font-size:12px; margin-bottom:4px; }
+    .source-card span { display:block; color:#737984; font-size:11px; line-height:1.45; }
+    .generated-image { display:block; width:min(100%,512px); height:auto; border-radius:12px; border:1px solid #e8e8eb; margin-top:12px; }
+    .send { width:34px; height:34px; border:0; border-radius:11px; color:#fff; background:var(--accent); cursor:pointer; font-size:18px; transition:.15s; }
+    .send:hover { background:var(--accent-hover); transform:translateY(-1px); }
+    .send:disabled { background:#c7c8d1; cursor:default; transform:none; }
+    .disclaimer { width:min(100%,790px); margin:8px auto 0; text-align:center; color:#a1a4aa; font-size:10px; }
+    dialog { width:min(620px, calc(100vw - 30px)); border:1px solid #e3e4e8; border-radius:16px; padding:0; box-shadow:0 20px 80px #10132130; color:var(--ink); }
+    dialog::backdrop { background:#17192355; backdrop-filter:blur(2px); }
+    .modal-head { display:flex; align-items:center; justify-content:space-between; padding:18px 20px; border-bottom:1px solid var(--line); font-weight:680; }
+    .modal-body { padding:20px; }
+    .modal-body label { display:block; margin-bottom:8px; font-size:12px; font-weight:650; }
+    .modal-body input, .modal-body textarea { width:100%; border:1px solid #dfe1e6; border-radius:9px; padding:11px 12px; outline:0; }
+    .modal-body input:focus, .modal-body textarea:focus { border-color:#aca4e4; }
+    .modal-body textarea { height:320px; resize:vertical; font:12px/1.6 Consolas,monospace; }
+    .modal-foot { display:flex; justify-content:flex-end; gap:8px; padding:14px 20px; border-top:1px solid var(--line); }
+    .modal-btn { border:1px solid #dedfe3; border-radius:9px; background:#fff; padding:9px 13px; cursor:pointer; }
+    .modal-btn.primary { border-color:var(--accent); background:var(--accent); color:#fff; }
+    .toast { position:absolute; top:70px; left:50%; transform:translateX(-50%); border-radius:10px; background:#292a30; color:#fff; padding:10px 14px; box-shadow:0 5px 18px #0002; font-size:12px; opacity:0; pointer-events:none; transition:opacity .2s; z-index:3; }
+    .toast.show { opacity:1; }
+    @media(max-width:760px) { :root { --accent:#6b5ce7; } .app { height:100dvh; background:linear-gradient(160deg,#fafaff,#f5f5f9 52%,#f8f8fc); } .sidebar { display:none; } .topbar { height:58px; flex-basis:58px; padding:0 14px; border:0; background:#ffffffa8; backdrop-filter:blur(22px) saturate(1.5); -webkit-backdrop-filter:blur(22px) saturate(1.5); } .top-actions { gap:2px; } .top-actions .icon-button { padding:8px; } #topPolicy { font-size:0; } #topPolicy::after { content:'⚙'; font-size:16px; } #clearChat { font-size:0; } #clearChat::after { content:'＋'; font-size:19px; } .scroll-area { background:transparent; } .content { padding:16px 16px calc(175px + env(safe-area-inset-bottom)); } .message { gap:9px; margin-bottom:22px; } .message-body { max-width:calc(100vw - 76px); } .welcome { min-height:58vh; } h1 { font-size:25px; } .suggestions { grid-template-columns:1fr 1fr; gap:9px; } .suggestion { min-height:76px; padding:12px; } .composer-wrap { padding:12px 12px calc(12px + env(safe-area-inset-bottom)); background:linear-gradient(0deg,#f6f6faee 60%,#f6f6fa99 86%,transparent); } .composer { width:100%; border:1px solid #ffffffd9; border-radius:24px; padding:11px 12px 9px 15px; background:#ffffffc9; box-shadow:0 8px 36px #2823441c, inset 0 1px 0 #fff; backdrop-filter:blur(26px) saturate(1.7); -webkit-backdrop-filter:blur(26px) saturate(1.7); } .composer:focus-within { border-color:#d5d0fb; box-shadow:0 8px 38px #5d50c522, inset 0 1px 0 #fff; } .tool-row { overflow-x:auto; scrollbar-width:none; } .tool-chip { white-space:nowrap; border-radius:999px; background:#ffffffb5; } .send { border-radius:50%; width:36px; height:36px; box-shadow:0 2px 7px #5846ca35; } .disclaimer { display:none; } dialog { border-radius:24px; backdrop-filter:blur(16px); } .modal-head { padding:17px 18px; } .modal-body { padding:18px; } .modal-foot { padding:12px 18px calc(12px + env(safe-area-inset-bottom)); } }
+    @media(max-width:390px) { .suggestions { grid-template-columns:1fr; } .suggestion:nth-child(n+3) { display:none; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><div class="logo">✦</div><div class="brand-name">Ray AI</div></div>
+      <button class="new-chat" id="newChat"><span class="plus">＋</span><span class="new-label">새 대화</span></button>
+      <div class="side-label">도구</div>
+      <button class="side-action" id="editPolicy"><span class="ico">⚙</span><span>주제별 정책</span></button>
+      <button class="side-action" id="editModel"><span class="ico">◈</span><span>모델 설정</span></button>
+      <div class="side-spacer"></div>
+      <div class="local-card"><div class="local-title">내 PC에서 실행 중</div><div class="local-copy">대화는 이 컴퓨터에 저장되고, 답변은 Ollama 로컬 모델이 생성합니다.</div><div class="local-copy" id="imageStatus" style="margin-top:7px">이미지 생성 도구 확인 중</div></div>
+      <div class="connection"><i class="dot" id="statusDot"></i><span id="statusText">연결 확인 중</span></div>
+    </aside>
+    <main class="main">
+      <header class="topbar"><div class="model-label">Ray AI <span>·</span> <span id="topModel">qwen3:4b</span></div><div class="top-actions"><button class="icon-button" id="topSettings" aria-label="모델 및 서버 설정">◈ 설정</button><button class="icon-button" id="topPolicy">⚙ 정책</button><button class="icon-button" id="clearChat">⌫ 기록 지우기</button></div></header>
+      <div class="scroll-area" id="scrollArea"><div class="content">
+        <section class="welcome" id="welcome">
+          <div class="welcome-mark">✦</div>
+          <h1>무엇이든 물어보세요</h1>
+          <p>Ray AI가 생각을 정리하고, 궁금한 점을 함께 풀어드릴게요.</p>
+          <div class="suggestions">
+            <button class="suggestion" data-prompt="이번 주에 할 일을 우선순위별로 정리해 줘."><strong>하루 계획 세우기</strong><span>해야 할 일을 순서대로 정리해요</span></button>
+            <button class="suggestion" data-prompt="이 주제를 초보자도 이해하기 쉽게 설명해 줘."><strong>새로운 주제 배우기</strong><span>어려운 내용을 쉽게 풀어봐요</span></button>
+            <button class="suggestion" data-prompt="이 문장을 자연스럽고 간결하게 다듬어 줘."><strong>글 다듬기</strong><span>문장을 명확하게 고쳐봐요</span></button>
+            <button class="suggestion" data-prompt="간단하고 맛있는 저녁 메뉴를 추천해 줘."><strong>아이디어 얻기</strong><span>오늘 저녁 메뉴부터 떠올려요</span></button>
+          </div>
+        </section>
+        <section class="messages" id="messages" aria-live="polite"></section>
+      </div></div>
+      <div class="composer-wrap"><div class="composer"><div class="tool-row"><button class="tool-chip" data-mode="search">🌐 웹 검색</button><button class="tool-chip" data-mode="weather">☀ 날씨</button><button class="tool-chip" data-mode="image">🖼 이미지</button></div><textarea id="messageInput" rows="1" placeholder="메시지를 입력하세요" aria-label="메시지 입력"></textarea><div class="composer-bottom"><span class="hint" id="inputHint">Enter 전송 · Shift+Enter 줄바꿈</span><button class="send" id="sendButton" aria-label="메시지 보내기">↑</button></div></div><div class="disclaimer">웹 검색과 날씨 요청은 관련 검색어 또는 도시를 외부 서비스에 보냅니다. 로컬 대화 내용은 전송하지 않습니다.</div></div>
+      <div class="toast" id="toast" role="status"></div>
+    </main>
+  </div>
+
+  <dialog id="modelDialog"><div class="modal-head">모델 및 연결 설정<button class="icon-button" data-close="modelDialog">✕</button></div><div class="modal-body"><label for="modelInput">Ollama 모델 이름</label><input id="modelInput" value="qwen3:4b"><p style="color:#777d86;font-size:12px;line-height:1.6">Ollama에 설치된 모델의 이름을 입력하세요. 예: qwen3:4b</p><label for="serverInput" style="margin-top:18px">Ray AI 서버 주소 (iPhone 연결용)</label><input id="serverInput" placeholder="http://192.168.0.10:8765" inputmode="url"><label for="tokenInput" style="margin-top:14px">연결 토큰</label><input id="tokenInput" type="password" placeholder="PC의 config.json에서 api_token 복사"><p style="color:#777d86;font-size:12px;line-height:1.6">PC와 iPhone을 같은 Wi-Fi에 연결하세요. PC에서 <b>실행하기_iOS서버.bat</b>을 켜고 화면에 표시된 주소를 입력한 뒤, PC의 config.json에 있는 api_token도 붙여 넣으세요. 토큰은 다른 사람에게 공유하지 마세요. 비워 두면 현재 기기의 서버를 사용합니다.</p></div><div class="modal-foot"><button class="modal-btn" data-close="modelDialog">취소</button><button class="modal-btn primary" id="saveModel">저장</button></div></dialog>
+  <dialog id="policyDialog"><div class="modal-head">주제별 정책 편집<button class="icon-button" data-close="policyDialog">✕</button></div><div class="modal-body"><label for="promptInput">시스템 지침</label><textarea id="promptInput" spellcheck="false"></textarea></div><div class="modal-foot"><button class="modal-btn" data-close="policyDialog">취소</button><button class="modal-btn primary" id="savePrompt">저장</button></div></dialog>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const input = $('messageInput'), messages = $('messages'), welcome = $('welcome'), scrollArea = $('scrollArea');
+    const API_BASE_KEY = 'rayai.serverBase';
+    const API_TOKEN_KEY = 'rayai.apiToken';
+    const apiBase = () => (localStorage.getItem(API_BASE_KEY) || '').replace(/\/$/, '');
+    const authHeaders = () => localStorage.getItem(API_TOKEN_KEY) ? {'Authorization':'Bearer ' + localStorage.getItem(API_TOKEN_KEY)} : {};
+    let busy = false, mode = 'chat';
+    function toast(text) { const el = $('toast'); el.textContent = text; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 2600); }
+    function scrollBottom() { requestAnimationFrame(() => { scrollArea.scrollTop = scrollArea.scrollHeight; }); }
+    function addMessage(role, text, isError = false, meta = {}) {
+      welcome.hidden = true;
+      const article = document.createElement('article'); article.className = `message ${role}${isError ? ' error' : ''}`;
+      const avatar = document.createElement('div'); avatar.className = 'avatar'; avatar.textContent = role === 'user' ? '나' : '✦';
+      const body = document.createElement('div'); body.className = 'message-body';
+      const name = document.createElement('div'); name.className = 'message-name'; name.textContent = role === 'user' ? '나' : 'Ray AI';
+      const content = document.createElement('div'); content.className = 'message-text'; content.textContent = text;
+      body.append(name, content);
+      if (meta.image_url && /^\/generated\/[A-Za-z0-9_.-]+$/.test(meta.image_url)) { const image = document.createElement('img'); image.className = 'generated-image'; image.alt = 'Ray AI가 생성한 이미지'; body.append(image); fetch(apiBase() + meta.image_url, {headers:authHeaders()}).then(response => { if (!response.ok) throw new Error(); return response.blob(); }).then(blob => { image.src = URL.createObjectURL(blob); }).catch(() => { image.alt = '생성 이미지에 연결하지 못했습니다.'; }); }
+      if (meta.sources?.length) { const list = document.createElement('div'); list.className = 'source-list'; meta.sources.forEach(source => { try { const url = new URL(source.url); if (!['http:','https:'].includes(url.protocol)) return; const link = document.createElement('a'); link.className = 'source-card'; link.href = url.href; link.target = '_blank'; link.rel = 'noopener noreferrer'; const title = document.createElement('strong'); title.textContent = source.title || url.hostname; const snippet = document.createElement('span'); snippet.textContent = source.snippet || url.hostname; link.append(title, snippet); list.append(link); } catch {} }); body.append(list); }
+      article.append(avatar, body); messages.append(article); scrollBottom(); return article;
+    }
+    function addTyping() {
+      const article = document.createElement('article'); article.className = 'message assistant'; article.id = 'typing';
+      const avatar = document.createElement('div'); avatar.className = 'avatar'; avatar.textContent = '✦';
+      const body = document.createElement('div'); body.className = 'message-body';
+      const name = document.createElement('div'); name.className = 'message-name'; name.textContent = 'Ray AI';
+      const dots = document.createElement('div'); dots.className = 'typing'; dots.innerHTML = '<i></i><i></i><i></i>'; body.append(name, dots); article.append(avatar, body); messages.append(article); scrollBottom();
+    }
+    async function api(path, data) {
+      const response = await fetch(apiBase() + path, data ? {method:'POST', headers:{'Content-Type':'application/json', ...authHeaders()}, body:JSON.stringify(data)} : {headers:authHeaders()});
+      const result = await response.json(); if (!response.ok) throw new Error(result.error || '요청을 처리하지 못했습니다.'); return result;
+    }
+    async function streamChat(text, article) {
+      const response = await fetch(apiBase() + '/api/chat/stream', {method:'POST', headers:{'Content-Type':'application/json', ...authHeaders()}, body:JSON.stringify({message:text})});
+      if (!response.ok) { const body = await response.json().catch(() => ({})); throw new Error(body.error || '답변을 받지 못했습니다.'); }
+      const reader = response.body.getReader(), decoder = new TextDecoder(); let pending = '', answer = '';
+      const content = article.querySelector('.message-text');
+      while (true) {
+        const {value, done} = await reader.read(); pending += decoder.decode(value || new Uint8Array(), {stream:!done});
+        const rows = pending.split('\n'); pending = rows.pop() || '';
+        for (const row of rows) { if (!row.trim()) continue; const item = JSON.parse(row); if (item.error) throw new Error(item.error); if (item.token) { answer += item.token; content.textContent = answer; scrollBottom(); } }
+        if (done) break;
+      }
+      if (pending.trim()) { const item = JSON.parse(pending); if (item.error && !item.partial) throw new Error(item.error); }
+      if (!answer) throw new Error('빈 답변이 돌아왔습니다. Ollama가 실행 중인지 확인해 주세요.');
+    }
+    async function sendMessage(text = input.value.trim()) {
+      if (!text || busy) return;
+      busy = true; input.value = ''; input.style.height = 'auto'; $('sendButton').disabled = true;
+      addMessage('user', text); addTyping(); input.focus();
+      try {
+        if (mode === 'chat' && !/날씨|기온|온도|강수|비\s*올|비가\s*오|눈\s*올|눈이\s*오|weather|forecast|웹\s*검색|검색해|검색해서|인터넷에서|웹에서|최신|최근\s*(?:뉴스|소식|정보)|뉴스\s*찾|search\s+the\s+web|이미지\s*생성|그림\s*(?:그려|만들어)|그려\s*줘/i.test(text)) {
+          $('typing')?.remove(); const article = addMessage('assistant', ''); await streamChat(text, article);
+        } else { const result = await api('/api/chat', {message:text, mode}); $('typing')?.remove(); addMessage('assistant', result.answer, false, result); }
+      }
+      catch (error) { $('typing')?.remove(); addMessage('assistant', error.message, true); }
+      finally { busy = false; $('sendButton').disabled = false; input.focus(); }
+    }
+    function setStatus(connected, model, models, comfyui, checkpoints) {
+      $('topModel').textContent = model; $('modelInput').value = model;
+      const installed = models.some(name => name === model || name.startsWith(model + ':'));
+      const dot = $('statusDot'); dot.className = 'dot' + (connected && installed ? ' ok' : connected ? ' warn' : '');
+      $('statusText').textContent = !connected ? 'Ollama 실행 필요' : installed ? '모델 연결됨' : '모델 다운로드 필요';
+      $('imageStatus').textContent = !comfyui ? '이미지 생성: ComfyUI 추가 설치 필요' : checkpoints.length ? `이미지 생성 준비됨 · ${checkpoints.length}개 모델` : '이미지 생성: ComfyUI 모델 필요';
+    }
+    async function loadStatus() { try { const status = await api('/api/status'); setStatus(status.connected, status.model, status.models, status.comfyui, status.checkpoints || []); } catch { $('statusText').textContent = '상태 확인 실패'; } }
+    async function loadHistory() {
+      try { const history = await api('/api/history'); history.forEach(item => { if (['user','assistant'].includes(item.role)) addMessage(item.role, item.content || '', false, item); }); if (!history.length) welcome.hidden = false; }
+      catch { toast('대화 기록을 불러오지 못했습니다.'); }
+    }
+    $('sendButton').addEventListener('click', () => sendMessage());
+    input.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); } });
+    input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 180) + 'px'; });
+    document.querySelectorAll('.tool-chip').forEach(button => button.addEventListener('click', () => {
+      mode = mode === button.dataset.mode ? 'chat' : button.dataset.mode;
+      document.querySelectorAll('.tool-chip').forEach(chip => chip.classList.toggle('active', chip.dataset.mode === mode));
+      const hints = {chat:['메시지를 입력하세요','Enter 전송 · Shift+Enter 줄바꿈'],search:['검색할 내용을 입력하세요','검색어가 웹 검색 서비스에 전달됩니다'],weather:['도시 이름을 입력하세요 · 예: 서울','도시 이름이 날씨 서비스에 전달됩니다'],image:['만들고 싶은 이미지를 설명하세요','이미지 생성은 ComfyUI가 필요합니다']};
+      input.placeholder = hints[mode][0]; $('inputHint').textContent = hints[mode][1]; input.focus();
+    }));
+    document.querySelectorAll('.suggestion').forEach(button => button.addEventListener('click', () => { input.value = button.dataset.prompt; input.focus(); input.dispatchEvent(new Event('input')); }));
+    $('newChat').addEventListener('click', async () => {
+      if (messages.childElementCount && !confirm('저장된 대화 기록을 모두 지울까요?')) return;
+      try { await api('/api/clear', {}); messages.replaceChildren(); welcome.hidden = false; input.value = ''; input.focus(); toast('새 대화를 시작합니다.'); }
+      catch (error) { toast(error.message); }
+    });
+    $('clearChat').addEventListener('click', () => $('newChat').click());
+    async function openModel() { $('modelDialog').showModal(); $('modelInput').focus(); $('modelInput').select(); $('serverInput').value = apiBase(); $('tokenInput').value = localStorage.getItem(API_TOKEN_KEY) || ''; if (!apiBase()) { try { const pairing = await api('/api/pair'); if (pairing.api_token) $('tokenInput').value = pairing.api_token; } catch {} } }
+    $('editModel').addEventListener('click', openModel);
+    $('topSettings').addEventListener('click', openModel);
+    $('saveModel').addEventListener('click', async () => { const nextBase = $('serverInput').value.trim().replace(/\/$/, ''); const nextToken = $('tokenInput').value.trim(); localStorage.setItem(API_BASE_KEY, nextBase); localStorage.setItem(API_TOKEN_KEY, nextToken); try { const result = await api('/api/settings', {model:$('modelInput').value}); $('topModel').textContent = result.model; $('modelDialog').close(); await loadStatus(); toast('설정을 저장했습니다.'); } catch (error) { if (nextBase) { $('modelDialog').close(); await loadStatus(); toast('서버 연결을 확인해 주세요: ' + error.message); } else toast(error.message); } });
+    async function openPolicy() { try { const result = await api('/api/prompt'); $('promptInput').value = result.prompt; $('policyDialog').showModal(); } catch (error) { toast(error.message); } }
+    $('editPolicy').addEventListener('click', openPolicy); $('topPolicy').addEventListener('click', openPolicy);
+    $('savePrompt').addEventListener('click', async () => { try { await api('/api/prompt', {prompt:$('promptInput').value}); $('policyDialog').close(); toast('정책 지침을 저장했습니다.'); } catch (error) { toast(error.message); } });
+    document.querySelectorAll('[data-close]').forEach(button => button.addEventListener('click', () => $(button.dataset.close).close()));
+    document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); }));
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('/sw.js').catch(() => {});
+    loadHistory(); loadStatus(); setInterval(loadStatus, 10000); input.focus();
+  </script>
+</body>
+</html>

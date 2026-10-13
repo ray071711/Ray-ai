@@ -1,0 +1,7 @@
+{
+  "appId": "ai.ray.local",
+  "appName": "Ray AI",
+  "webDir": "www",
+  "server": {"iosScheme": "capacitor"},
+  "ios": {"contentInset": "automatic"}
+}
